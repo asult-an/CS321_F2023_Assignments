@@ -48,7 +48,7 @@ public class P1{
         ArrayList<ArrayList<Node>> graph = new ArrayList<ArrayList<Node>>();
 
         try{
-            File inputFile = new File("./InputFiles/input2.txt");
+            File inputFile = new File("./A3/InputFiles/input2.txt");
             Scanner fileIn = new Scanner(inputFile);
             fileIn.useDelimiter(" ");
 
