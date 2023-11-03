@@ -19,6 +19,7 @@ public class P1{
         }
     }
     public static void main(String[] args){
+
         Object[] input = readInput();
 
         // Print out the turn penalty. Note: Maybe dummy this out for the version we turn in?
@@ -34,6 +35,7 @@ public class P1{
             throw new RuntimeErrorException(null);
         }
 
+
         // Prints out list of paths. Note: Maybe dummy this out for the version we turn in?
         int count = 1;
         for(ArrayList<Node> node : graph){
@@ -44,8 +46,12 @@ public class P1{
         }
 
         // Call method for getting the best path from first node to final node. Prints result.
+        long startTime = System.currentTimeMillis();
         int bestPath = findBestPath(turnPenalty, graph);
         System.out.println(bestPath);
+        // Total time taken from beginning to end.
+        long totalTime = System.currentTimeMillis() - startTime;
+        System.out.println("Time taken finding the best path: " + totalTime + " milliseconds");
     }
     /**
      * Reads an input file to generate and return an adjacency list graph and the turn penalty for the problem
@@ -128,10 +134,8 @@ public class P1{
         int numNodes = graph.size() + 1;
         // TEST PRINT
         System.out.println("Number of nodes: " + numNodes);
-        int numEdges = 0;
-        for (ArrayList<Node> nodes : graph) {
-            numEdges += nodes.size();
-        }
+        int nodeSideLength = (int)Math.sqrt(numNodes);
+        int numEdges = nodeSideLength * (nodeSideLength - 1) * 2;
         // TEST PRINT
         System.out.println("Number of edges: " + numEdges);
 
@@ -180,7 +184,62 @@ public class P1{
             edgesChecked += 2;
         }
 
-        // TODO: Change dummy return number to something that matters once the method is complete
+
+        // Handle second half of graph's edges. edgesChecked does not need to be updated beyond this point!!!
+        // "Column length" of nodes is used to determine when we should consider a node with one neighbor to be going
+        // down, or up.
+        int currentColumnLength = nodeSideLength;
+        // TEST PRINT
+        System.out.println("Middle column's length (also the \"k\" in k by k): " + currentColumnLength);
+        while (currentColumnLength > 1) {
+            // Top node in column (only has one neighbor, going down)
+            int bestPathDownFromUp = bestPathCurrDirUp[nodesChecked + 1] + graph.get(nodesChecked).get(0).weight
+                    + turnPenalty;
+            int bestPathDownFromDown = bestPathCurrDirDown[nodesChecked + 1] + graph.get(nodesChecked).get(0).weight;
+
+            // Checks to see what paths to the currently checked node actually exist.
+            if (bestPathCurrDirDown[nodesChecked + 1] == Integer.MIN_VALUE) {
+                bestPathCurrDirDown[graph.get(nodesChecked).get(0).id] = bestPathDownFromUp;
+            } else {
+                bestPathCurrDirDown[graph.get(nodesChecked).get(0).id] =
+                        Integer.max(bestPathDownFromUp, bestPathDownFromDown);
+            }
+            nodesChecked++;
+
+            //Middle nodes (ones with two neighbors), of which there should be column length minus 2 (the top and bottom)
+            for (int i = 0; i < currentColumnLength - 2; i++) {
+                int bestPathUpFromUp = bestPathCurrDirUp[nodesChecked + 1] + graph.get(nodesChecked).get(0).weight;
+                int bestPathUpFromDown = bestPathCurrDirDown[nodesChecked + 1] + graph.get(nodesChecked).get(0).weight
+                        + turnPenalty;
+                bestPathDownFromUp = bestPathCurrDirUp[nodesChecked + 1] + graph.get(nodesChecked).get(1).weight
+                        + turnPenalty;
+                bestPathDownFromDown = bestPathCurrDirDown[nodesChecked + 1] + graph.get(nodesChecked).get(1).weight;
+
+                // No check is needed to be done here as all middle nodes have two paths leading to them.
+                bestPathCurrDirUp[graph.get(nodesChecked).get(0).id] =
+                        Integer.max(bestPathUpFromUp, bestPathUpFromDown);
+                bestPathCurrDirDown[graph.get(nodesChecked).get(1).id] =
+                        Integer.max(bestPathDownFromUp, bestPathDownFromDown);
+                nodesChecked++;
+            }
+
+            // Bottom node in column (only has one neighbor, going up)
+            int bestPathUpFromUp = bestPathCurrDirUp[nodesChecked + 1] + graph.get(nodesChecked).get(0).weight;
+            int bestPathUpFromDown = bestPathCurrDirDown[nodesChecked + 1] + graph.get(nodesChecked).get(0).weight
+                    + turnPenalty;
+
+            // Checks to see what paths to the currently checked node actually exist.
+            if (bestPathCurrDirUp[nodesChecked + 1] == Integer.MIN_VALUE) {
+                bestPathCurrDirUp[graph.get(nodesChecked).get(0).id] = bestPathUpFromDown;
+            } else {
+                bestPathCurrDirUp[graph.get(nodesChecked).get(0).id] =
+                        Integer.max(bestPathUpFromUp, bestPathUpFromDown);
+            }
+            nodesChecked++;
+
+            currentColumnLength--;
+        }
+
         return Integer.max(bestPathCurrDirUp[numNodes], bestPathCurrDirDown[numNodes]);
     }
 }
