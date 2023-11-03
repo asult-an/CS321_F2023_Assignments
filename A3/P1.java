@@ -127,10 +127,10 @@ public class P1{
         // convenience.
         int numNodes = graph.size() + 1;
         // TEST PRINT
-        System.out.println("Number of nodes: " + +numNodes);
+        System.out.println("Number of nodes: " + numNodes);
         int numEdges = 0;
-        for (int i = 0; i < graph.size(); i++) {
-            numEdges += graph.get(i).size();
+        for (ArrayList<Node> nodes : graph) {
+            numEdges += nodes.size();
         }
         // TEST PRINT
         System.out.println("Number of edges: " + numEdges);
@@ -152,7 +152,7 @@ public class P1{
                 bestPathCurrDirUp[graph.get(nodesChecked).get(0).id] = graph.get(nodesChecked).get(0).weight;
                 bestPathCurrDirDown[graph.get(nodesChecked).get(1).id] = graph.get(nodesChecked).get(1).weight;
             } else {
-                // Calculates possible best paths. Note that some may be underflowed, huge values so we check for this.
+                // Calculates possible best paths. Note that some may be underflowed, huge values, so we check for this.
                 int bestPathUpFromUp = bestPathCurrDirUp[nodesChecked + 1] + graph.get(nodesChecked).get(0).weight;
                 int bestPathUpFromDown = bestPathCurrDirDown[nodesChecked + 1] + graph.get(nodesChecked).get(0).weight
                                          + turnPenalty;
