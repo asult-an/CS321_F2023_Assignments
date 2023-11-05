@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 import javax.management.RuntimeErrorException;
@@ -18,13 +19,13 @@ public class P1{
             weight = inWeight;
         }
     }
+
+    
     public static void main(String[] args){
 
-        Object[] input = readInput();
+        Object[] input = readInput("./input6.txt");
 
-        // Print out the turn penalty. Note: Maybe dummy this out for the version we turn in?
         int turnPenalty = (int)input[0];
-        System.out.println("Turn Penalty: " + turnPenalty);
 
         ArrayList<ArrayList<Node>> graph;
         if(input[1] != null){
@@ -36,33 +37,36 @@ public class P1{
         }
 
 
-        // Prints out list of paths. Note: Maybe dummy this out for the version we turn in?
-        int count = 1;
-        for(ArrayList<Node> node : graph){
-            for(Node neighbor : node){
-                System.out.println("Node " + count + ": " + neighbor.id + " " + neighbor.weight);
-            }
-            ++count;
-        }
-
-        // Call method for getting the best path from first node to final node. Prints result.
+        // Call method for getting the best path from first node to final node. Prints cost.
         long startTime = System.currentTimeMillis();
         int bestPath = findBestPath(turnPenalty, graph);
-        System.out.println(bestPath);
+        System.out.println("Best path cost: " + bestPath);
         // Total time taken from beginning to end.
         long totalTime = System.currentTimeMillis() - startTime;
         System.out.println("Time taken finding the best path: " + totalTime + " milliseconds");
+
+        //Call brute forse method for getting best path cost
+        ArrayList<ArrayList<Node>> BFPaths = new ArrayList<ArrayList<Node>>();
+        ArrayList<Integer> costs = new ArrayList<Integer>();
+        BFBestPath(graph, 0, graph.size() + 1, new ArrayList<Node>(), turnPenalty, BFPaths, costs);
+        int max = Integer.MIN_VALUE;
+        for(Integer cost : costs){
+            if(cost > max){
+                max = cost;
+            }
+        }
+        System.out.println("Brute Force solution minimum = " + max);
     }
     /**
      * Reads an input file to generate and return an adjacency list graph and the turn penalty for the problem
      * @return Object[], with a list of lists of adjacent nodes and the turn penalty
      */
-    public static Object[] readInput(){
+    public static Object[] readInput(String inputFilePath){
         Object[] data = new Object[2];
         ArrayList<ArrayList<Node>> graph = new ArrayList<>();
 
         try{
-            File inputFile = new File("./input1.txt");
+            File inputFile = new File(inputFilePath);
             Scanner fileIn = new Scanner(inputFile);
             fileIn.useDelimiter(" ");
 
@@ -122,6 +126,87 @@ public class P1{
     }
 
     /**
+     * Generates all possible paths from the start node to the end node of a square grid graph using a brute force algorithm.
+     * Then finds the cost associated with each path
+     * @param graph The square grid graph
+     * @param startNode The starting node
+     * @param endNode The ending node
+     * @param path A possible path
+     * @param TP The turn penalty
+     * @param paths A list of all possible paths
+     * @param costs A list of costs associated with each possible path
+     */
+    public static void BFBestPath(ArrayList<ArrayList<Node>> graph, int startNode, int endNode, ArrayList<Node> path, int TP, ArrayList<ArrayList<Node>> paths, ArrayList<Integer> costs){
+        //Recursively generate all possible paths from the start to the end node
+        BFGeneratePathHelper(graph, 0, graph.size() + 1, new ArrayList<Node>(), TP, paths);
+
+        int n = (int)Math.sqrt(graph.size() + 1);
+        //for every possible path, calculate the cost of the graph traversal
+        for(ArrayList<Node> racePath : paths){
+            int raceCost = 0;
+            int column = 1;
+            boolean previousTurnUp = false;
+            //calculate the cost in the expanding part of the graph
+            for(int i = 0; i < n - 1; ++i){
+                raceCost += racePath.get(i).weight;
+                if(i != 0){
+                    boolean currentTurnUp = racePath.get(i).id == (racePath.get(i - 1).id + column);
+                    if(previousTurnUp == !currentTurnUp){
+                        raceCost += TP;
+                    }
+                    previousTurnUp = currentTurnUp;
+                }
+                else if(racePath.get(i).id == 2){
+                    previousTurnUp = true;
+                }
+                else{
+                    previousTurnUp = false;
+                }
+                
+                ++column;
+            }
+            //calculate the cost in the converging part of the graph
+            for(int i = n - 1; i < 2 * n - 2; ++i){
+                raceCost += racePath.get(i).weight;
+                boolean currentTurnUp = racePath.get(i).id == (racePath.get(i - 1).id + (column - 1));
+                if(previousTurnUp == !currentTurnUp){
+                        raceCost += TP;
+                }
+                previousTurnUp = currentTurnUp;
+                --column;
+            }
+            column = 0;
+
+            //add the calculated cost to the list of costs
+            costs.add(raceCost);
+        }
+    }
+    /**
+     * Generates all possible paths from the start node to the end node using a brute force approach.
+     * @param graph The graph to traverse
+     * @param startNode The starting node
+     * @param endNode The ending node
+     * @param path A possible path
+     * @param TP The turn penalty
+     * @param paths A list of all possible paths
+     */
+    public static void BFGeneratePathHelper(ArrayList<ArrayList<Node>> graph, int startNode, int endNode, ArrayList<Node> path, int TP, ArrayList<ArrayList<Node>> paths){
+        //add TP logic
+        for(Node neighbor : graph.get(startNode)){
+            path.add(neighbor);
+            if(neighbor.id == endNode){
+                ArrayList<Node> newPath = new ArrayList<>(path);
+                paths.add(newPath);
+            }
+            else{
+                BFGeneratePathHelper(graph, neighbor.id - 1, endNode, path, TP, paths);
+                
+            }
+            path.remove(path.size() - 1);
+        }
+    }
+
+    /**
      * Finds the best path through an inputted k by k graph using dynamic programming.
      * @param turnPenalty, the penalty for changing from taking nodes' upper neighbor paths to their lower neighbor
      *                     paths, or vice versa
@@ -133,11 +218,11 @@ public class P1{
         // convenience.
         int numNodes = graph.size() + 1;
         // TEST PRINT
-        System.out.println("Number of nodes: " + numNodes);
+        //System.out.println("Number of nodes: " + numNodes);
         int nodeSideLength = (int)Math.sqrt(numNodes);
         int numEdges = nodeSideLength * (nodeSideLength - 1) * 2;
         // TEST PRINT
-        System.out.println("Number of edges: " + numEdges);
+        //System.out.println("Number of edges: " + numEdges);
 
         // Arrays to store best path values in for each node.
         int[] bestPathCurrDirUp = new int[numNodes + 1];
@@ -190,7 +275,7 @@ public class P1{
         // down, or up.
         int currentColumnLength = nodeSideLength;
         // TEST PRINT
-        System.out.println("Middle column's length (also the \"k\" in k by k): " + currentColumnLength);
+        //System.out.println("Middle column's length (also the \"k\" in k by k): " + currentColumnLength);
         while (currentColumnLength > 1) {
             // Top node in column (only has one neighbor, going down)
             int bestPathDownFromUp = bestPathCurrDirUp[nodesChecked + 1] + graph.get(nodesChecked).get(0).weight
