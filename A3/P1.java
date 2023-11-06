@@ -1,3 +1,6 @@
+/**
+ * Program Authors: Matthew Bertello, James Last, Adeel Sultan
+ */
 
 import java.io.File;
 import java.io.FileNotFoundException;
