@@ -23,7 +23,7 @@ public class P1{
     
     public static void main(String[] args){
 
-        Object[] input = readInput("./input6.txt");
+        Object[] input = readInput("./input1.txt");
 
         int turnPenalty = (int)input[0];
 
@@ -45,7 +45,7 @@ public class P1{
         long totalTime = System.currentTimeMillis() - startTime;
         System.out.println("Time taken finding the best path: " + totalTime + " milliseconds");
 
-        //Call brute forse method for getting best path cost
+        //Call brute force method for getting the best path cost
         ArrayList<ArrayList<Node>> BFPaths = new ArrayList<ArrayList<Node>>();
         ArrayList<Integer> costs = new ArrayList<Integer>();
         BFBestPath(graph, 0, graph.size() + 1, new ArrayList<Node>(), turnPenalty, BFPaths, costs);
@@ -55,7 +55,7 @@ public class P1{
                 max = cost;
             }
         }
-        System.out.println("Brute Force solution minimum = " + max);
+        System.out.println("Brute Force solution: " + max);
     }
     /**
      * Reads an input file to generate and return an adjacency list graph and the turn penalty for the problem
